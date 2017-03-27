@@ -1,12 +1,14 @@
+package com.zhranklin.scalatricks
+
 /**
  * This is the trait for combining phantomType such as:
  * ```
- *   import PhantomTypeCombiner._
+ *   import PhantomTypeCombiners._
  *   def test[A](implicit ev: ![A <:< String] && [A <:< AnyRef])
  * ```
  * Note: When using these combiners, you should import all symbols in the companion object, or mix in the trait
  */
-trait PhantomTypeCombiner {
+trait PhantomTypeCombiners {
   trait ![T]
   implicit def $passAnyForNot[T]: ![T] = null
   implicit def $ambiguousTrue[T](implicit ev: T): ![T] = null
@@ -20,4 +22,4 @@ trait PhantomTypeCombiner {
 
 }
 
-object PhantomTypeCombiner extends PhantomTypeCombiner
+object PhantomTypeCombiners extends PhantomTypeCombiners

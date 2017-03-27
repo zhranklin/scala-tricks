@@ -1,3 +1,5 @@
+package com.zhranklin.scalatricks
+
 /**
  * An alternative syntax to postfix:
  * ```
