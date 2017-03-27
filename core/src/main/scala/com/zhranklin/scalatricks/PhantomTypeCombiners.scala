@@ -4,7 +4,7 @@ package com.zhranklin.scalatricks
  * This is the trait for combining phantomType such as:
  * ```
  *   import PhantomTypeCombiners._
- *   def test[A](implicit ev: ![A <:< String] && [A <:< AnyRef])
+ *   def test[A](implicit ev: ![A <:< String] && (A <:< AnyRef))
  * ```
  * Note: When using these combiners, you should import all symbols in the companion object, or mix in the trait
  */
