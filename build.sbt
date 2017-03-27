@@ -15,7 +15,7 @@ lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
   licenses := ("Apache2", url("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil,
-  homepage := Some(url("http://softwaremill.com")),
+  homepage := Some(url("http://zhranklin.com")),
   scmInfo := Some(ScmInfo(url("https://github.com/zhranklin/scala-tricks"), "scm:git:git@github.com/zhranklin/scala-tricks.git", None)),
   developers := Developer("Zhranklin", "Zhranklin", "chigou79@outlook.com", url("http://www.zhranklin.com")) :: Nil
 )
