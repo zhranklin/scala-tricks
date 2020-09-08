@@ -1,4 +1,4 @@
-package com.zhranklin.scalatricks
+package zrkn.tricks
 
 /**
  * An alternative syntax to postfix:

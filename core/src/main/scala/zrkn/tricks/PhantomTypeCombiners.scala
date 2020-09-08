@@ -1,4 +1,4 @@
-package com.zhranklin.scalatricks
+package zrkn.tricks
 
 /**
  * This is the trait for combining phantomType such as:
