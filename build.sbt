@@ -1,6 +1,6 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.0",
+  version := "0.2.1-SNAPSHOT",
   scalaVersion := "2.13.2",
   crossScalaVersions := Seq(scalaVersion.value, "2.12.1"),
   // Sonatype OSS deployment

@@ -3,24 +3,28 @@ package zrkn.op
 import java.nio.file.NotDirectoryException
 
 import ammonite.ops._
+import os.PathConvertible._
+import zrkn.op.RegexOpsContext._
 
 /**
  * Created by 张武(zhangwu@corp.netease.com) at 2020/9/6
  */
 trait OuterSession {
-  import os.PathConvertible._
   private val inDocker = (root/'rt).toIO.exists
+  private val homePath = sys.env.getOrElse("OUTER_HOME", sys.env.getOrElse("HOME", "~"))
   val rt: Path = if (inDocker) root/'rt else root
   var wd0: Path =
     if (inDocker)
       oPath(sys.env.getOrElse("OUTER_PWD", "/"))
     else pwd
-  def oPath(p: String) =
-    if (inDocker && !p.matches("^/rt(/.*)?$") && !p.startsWith("/dev/std")) {
-      if (p.startsWith("/"))
-        Path("/rt" + p, root)
-      else Path(p, wd0)
-    } else Path(p, pwd)
+  def oPath(path: String): Path = {
+    path.replaceAll("^~", homePath) match {
+      case p if !inDocker => Path(p, pwd)
+      case rr"/dev/std.*|/rt(/.*)?$p" => Path(p, pwd)
+      case rr"/.*$p" => Path("/rt" + p, root)
+      case p => Path(p, wd0)
+    }
+  }
 
   implicit def wd: Path = wd0
 
