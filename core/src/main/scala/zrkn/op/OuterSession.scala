@@ -18,7 +18,10 @@ trait OuterSession {
       oPath(sys.env.getOrElse("OUTER_PWD", "/"))
     else pwd
   def oPath(path: String): Path = {
-    path.replaceAll("^~", homePath) match {
+    path
+      .replaceAll("^~", homePath)
+      .replaceAll("^"+sys.env.getOrElse("OUTER_PWD", "###"), "/rt")
+    match {
       case p if !inDocker => Path(p, pwd)
       case rr"/dev/std.*|/rt(/.*)?$p" => Path(p, pwd)
       case rr"/.*$p" => Path("/rt" + p, root)
