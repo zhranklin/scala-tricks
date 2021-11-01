@@ -71,7 +71,7 @@ class Pipe(val __cmd: Seq[String], val __f: Seq[String] => Seq[String] = identit
   }
 }
 
-case class SubProc(stdout: os.ProcessInput, cancelF: () => ())
+case class SubProc(stdout: os.ProcessInput, cancelF: () => Unit)
 
 object Pipe {
   class CancelException extends Exception
@@ -97,7 +97,7 @@ object Pipe {
     }
   }
   def echo(str: String) = new PipeHead(new ByteArrayInputStream(str.getBytes()))
-  def readLine(f: (BufferedReader, Writer) => ()): AbsPipe = {
+  def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe = {
     new AbsPipe {
       override def __setPrev(prev: AbsPipe): AbsPipe = {
         __prev = Some(prev)
