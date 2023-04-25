@@ -1,7 +1,7 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.1",
-  scalaVersion := "2.13.6",
+  version := "0.2.2-SNAPSHOT",
+  scalaVersion := "3.0.2",
   // Sonatype OSS deployment
   publishMavenStyle := true,
   publishTo := {
@@ -30,12 +30,7 @@ lazy val core = project.settings(
   commonSettings,
   name := "scala-tricks",
   libraryDependencies ++=
-    "com.lihaoyi" %% "os-lib"       % "0.7.1"  % "provided" ::
-    "io.circe"    %% "circe-core"   % "0.13.0" ::
-    "io.circe"    %% "circe-parser" % "0.13.0" ::
-    "io.circe"    %% "circe-optics" % "0.13.0" ::
-    "io.circe"    %% "circe-generic"% "0.13.0" ::
-    "io.circe"    %% "circe-yaml"   % "0.13.1" ::
-    "com.lihaoyi" %% "ammonite-ops" % "2.2.0"  % "provided" ::
+    "com.lihaoyi" %% "os-lib"       % "0.8.0" ::
+    "me.vican.jorge" % "dijon_2.13" % "0.6.0" ::
     Nil
 )

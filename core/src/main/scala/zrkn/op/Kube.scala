@@ -1,7 +1,5 @@
 package zrkn.op
 
-import io.circe.Json
-
 import scala.language.dynamics
 
 /**
@@ -18,24 +16,22 @@ object Kube {
         else line.substring(start, end).trim
       }
     }
+    override def toString: String = line
   }
 
   def query(cmd: String)(implicit cwd: os.Path): Vector[Line] = {
-    val cmdRes = ammonite.ops.%%("bash", "-c", cmd)(cwd)
-    val lines = cmdRes.out.lines
-    if (lines.isEmpty && cmdRes.err.string.contains("No resource")) {
+    val cmdRes = bash.__(cmd) | callResult
+    val lines = cmdRes.out.lines()
+    if (lines.isEmpty && cmdRes.err.text().contains("No resource")) {
       Vector()
     } else {
       lines.drop(1).map(new Line(_, lines.head))
     }
   }
 
-  def yaml(cmd: String)(implicit cwd: os.Path): Json = {
-    val cmdRes = ammonite.ops.%%("bash", "-c", cmd)(cwd)
-    io.circe.yaml.parser.parse(cmdRes.out.string) match {
-      case Right(value) => value
-      case Left(err) => System.err.println(err.message); Json.Null
-    }
+  def json(cmd: String)(implicit cwd: os.Path) = {
+    val cmdRes = bash.__(cmd + " -ojson") | callResult
+    dijon.parse(cmdRes.out.text())
   }
 
 }
