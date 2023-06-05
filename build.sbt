@@ -1,7 +1,7 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.2-SNAPSHOT",
-  scalaVersion := "3.0.2",
+  version := "0.2.2",
+  scalaVersion := "3.3.0",
   // Sonatype OSS deployment
   publishMavenStyle := true,
   publishTo := {
@@ -31,6 +31,6 @@ lazy val core = project.settings(
   name := "scala-tricks",
   libraryDependencies ++=
     "com.lihaoyi" %% "os-lib"       % "0.8.0" ::
-    "me.vican.jorge" % "dijon_2.13" % "0.6.0" ::
+    "me.vican.jorge" % "dijon_2.13" % "0.6.0" % "provided" ::
     Nil
 )

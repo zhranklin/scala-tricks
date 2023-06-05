@@ -16,7 +16,7 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, priva
   import Pipe.SubProc
   def |[T](next: Pipe.PipeTail[T])(using Path) = next.execute(this)
   def selectDynamic(cmd: String): Pipe = __(cmd)
-  def !(using Path) = this | callTerm
+  def !(using Path): CommandResult = this | Pipe.!
   val __ : Pipe.Ext[Pipe] = new Pipe.Ext[Pipe]:
     def getOutput: (ProcessOutput, ProcessOutput) =
       if useStderr then
@@ -135,6 +135,8 @@ object Pipe:
     def execute(pipe: Pipe)(using Path) = pipe.__.call.out.text()
   val callResult = new PipeTail[CommandResult]:
     def execute(pipe: Pipe)(using Path) = pipe.__.call
+  val ! = new Pipe(Vector.empty) with PipeTail[CommandResult]:
+    def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call
   val callTerm = new PipeTail[CommandResult]:
     def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call
 end Pipe

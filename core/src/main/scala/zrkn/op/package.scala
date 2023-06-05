@@ -12,12 +12,16 @@ package object op:
   def echo(str: String) = Pipe.echo(str)
   def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe = Pipe.readLine(f)
   val bash = Pipe.bash
-  val ! = new Pipe(Vector.empty)
+  val ! = Pipe.!
   val callText = Pipe.callText
   val callResult = Pipe.callResult
   val callTerm = Pipe.callTerm
 
   extension (sc: StringContext) def rr: Interped = new Interped(sc)
+
+  extension (s: String)
+    def |[T](next: Pipe.PipeTail[T])(using Path) = echo(s) | next
+    def |[T <: AbsPipe](next: T): T = echo(s) | next
 
   private var wd0: Path = os.pwd
   inline given wd: Path = wd0
