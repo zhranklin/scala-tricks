@@ -52,7 +52,8 @@ object Pipe:
     def call(using Path) =
       val pproc = spawn
       proc("cat").call(
-        stdin = pproc.stdout
+        stdin = pproc.stdout,
+        check = false,
       )
 
     def apply(cmd: String): T = ???
