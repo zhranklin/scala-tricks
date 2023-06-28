@@ -19,7 +19,7 @@ object Kube:
     override def toString: String = line
 
   def query(cmd: String)(using Path): Vector[Line] =
-    val cmdRes = bash.__(cmd) | callResult
+    val cmdRes = bash.__(cmd) | !!!
     val lines = cmdRes.out.lines()
     if lines.isEmpty && cmdRes.err.text().contains("No resource") then
       Vector()
@@ -27,5 +27,5 @@ object Kube:
       lines.drop(1).map(new Line(_, lines.head))
 
   def json(cmd: String)(using Path) =
-    val cmdRes = bash.__(cmd + " -ojson") | callResult
+    val cmdRes = bash.__(cmd + " -ojson") | !!!
     dijon.parse(cmdRes.out.text())

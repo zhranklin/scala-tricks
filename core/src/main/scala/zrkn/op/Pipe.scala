@@ -16,7 +16,9 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, priva
   import Pipe.SubProc
   def |[T](next: Pipe.PipeTail[T])(using Path) = next.execute(this)
   def selectDynamic(cmd: String): Pipe = __(cmd)
-  def !(using Path): CommandResult = this | Pipe.!
+  def !(using Path): CommandResult = this | Pipe.!#
+  def !!(using Path): String = this | Pipe.!!
+  def !!!(using Path): CommandResult = this | Pipe.!!!
   val __ : Pipe.Ext[Pipe] = new Pipe.Ext[Pipe]:
     def getOutput: (ProcessOutput, ProcessOutput) =
       if useStderr then
@@ -35,13 +37,14 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, priva
         cwd = wd
       )
       SubProc(if (useStderr) sub.stderr else sub.stdout, Pipe.makeCancelCallback(prev, sub))
-    override def call(using wd: Path): CommandResult =
+    override def call(check: Boolean = false)(using wd: Path): CommandResult =
       val prev = __invokePrev
       val (stdout, stderr) = getOutput
       proc.call(
         stdin = prev.stdout,
         stdout = stdout,
         stderr = stderr,
+        check = check,
         cwd = wd
       )
 end Pipe
@@ -49,19 +52,19 @@ end Pipe
 object Pipe:
   trait Ext[+T <: AbsPipe]:
     def spawn(using Path): SubProc
-    def call(using Path) =
+    def call(check: Boolean = false)(using Path) =
       val pproc = spawn
       proc("cat").call(
         stdin = pproc.stdout,
-        check = false,
+        check = check,
       )
 
     def apply(cmd: String): T = ???
   case class SubProc(stdout: os.ProcessInput, cancelF: () => Unit)
   class CancelException extends Exception
   def main(args: Array[String]): Unit =
-    println(!.echo.__invokePrev | callText)
-    println(echo("asdf") | callText)
+    println(!.echo.__invokePrev | !!)
+    println(echo("asdf") | !!)
     println(echo("asdfqq\n111cccqq") | !.cat.`-n` | readLine{ (r, w) =>
       w.append("aaa\n")
       w.append("bbbqq\n")
@@ -70,7 +73,7 @@ object Pipe:
       }
       w.append("ccc\n")
       w.append("dddqq\n")
-    } | !.grep.qq | callText)
+    } | !.grep.qq | !!)
     val sub1 = bash.__("sleep 1; echo ba; sleep 1; echo b; sleep 1; echo c")
     val sub2 = readLine{ (r, w) =>
       w.append("qqq\n")
@@ -79,8 +82,8 @@ object Pipe:
         w.append(l + "asdf" + "\n")
       }
     }
-    sub1 | sub2 | !.cat | callTerm
-    bash.__("sleep 1; echo ba; sleep 1; echo b; sleep 1; echo c") | callTerm
+    sub1 | sub2 | !.cat | !#
+    bash.__("sleep 1; echo ba; sleep 1; echo b; sleep 1; echo c") | !#
     println("asdfasdfasdf")
   end main
 
@@ -88,7 +91,7 @@ object Pipe:
     override val __ = new Ext[PipeHead]:
       def spawn(using Path): SubProc =
         SubProc(new SubProcess.OutputStream(inputStream), () => ())
-      override def call(using Path): CommandResult =
+      override def call(check: Boolean = false)(using Path): CommandResult =
         val chunks = new ListBuffer[Either[geny.Bytes, geny.Bytes]]()
         os.Internals.transfer0(inputStream, (buf, n) => chunks.addOne(Left(new geny.Bytes(java.util.Arrays.copyOf(buf, n)))))
         CommandResult(0, chunks.toSeq)
@@ -132,12 +135,14 @@ object Pipe:
     def execute(pipe: Pipe)(using Path): T
   object bash extends Pipe(Vector.empty, s => Vector("bash", "-c", s.mkString(" "))):
     def apply(cmd: String): Pipe = __(cmd)
-  val callText = new PipeTail[String]:
-    def execute(pipe: Pipe)(using Path) = pipe.__.call.out.text()
-  val callResult = new PipeTail[CommandResult]:
-    def execute(pipe: Pipe)(using Path) = pipe.__.call
-  val ! = new Pipe(Vector.empty) with PipeTail[CommandResult]:
-    def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call
-  val callTerm = new PipeTail[CommandResult]:
-    def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call
+  val ! = new Pipe(Vector.empty)
+  // 直接调用, 并将结果直接输出到控制台
+  val !# = new PipeTail[CommandResult]:
+    def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call()
+  // 调用后将结果返回到字符串, 如执行失败会抛出异常
+  val !! = new PipeTail[String]:
+    def execute(pipe: Pipe)(using Path) = pipe.__.call(check = true).out.text()
+  // 调用后将结果封装到CallResult对象
+  val !!! = new PipeTail[CommandResult]:
+    def execute(pipe: Pipe)(using Path) = pipe.__.call()
 end Pipe

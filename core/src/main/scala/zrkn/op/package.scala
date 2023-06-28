@@ -13,9 +13,12 @@ package object op:
   def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe = Pipe.readLine(f)
   val bash = Pipe.bash
   val ! = Pipe.!
-  val callText = Pipe.callText
-  val callResult = Pipe.callResult
-  val callTerm = Pipe.callTerm
+  // 直接调用, 并将结果直接输出到控制台
+  val !# = Pipe.!#
+  // 调用后将结果返回到字符串, 如执行失败会抛出异常
+  val !! = Pipe.!!
+  // 调用后将结果封装到CallResult对象
+  val !!! = Pipe.!!!
 
   extension (sc: StringContext) def rr: Interped = new Interped(sc)
 
