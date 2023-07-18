@@ -1,3 +1,5 @@
+.bloop/
+project/
 .DS_Store
 .metals/
 *.class

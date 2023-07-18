@@ -87,15 +87,15 @@ object Pipe:
     println("asdfasdfasdf")
   end main
 
-  class PipeHead(inputStream: java.io.InputStream) extends Pipe(Nil):
+  class PipeHead(inputStream: java.io.InputStream, name: String) extends Pipe(Nil):
     override val __ = new Ext[PipeHead]:
       def spawn(using Path): SubProc =
         SubProc(new SubProcess.OutputStream(inputStream), () => ())
       override def call(check: Boolean = false)(using Path): CommandResult =
         val chunks = new ListBuffer[Either[geny.Bytes, geny.Bytes]]()
         os.Internals.transfer0(inputStream, (buf, n) => chunks.addOne(Left(new geny.Bytes(java.util.Arrays.copyOf(buf, n)))))
-        CommandResult(0, chunks.toSeq)
-  def echo(str: String) = new PipeHead(new ByteArrayInputStream(str.getBytes()))
+        CommandResult("PipeHead" :: name :: Nil, 0, chunks.toSeq)
+  def echo(str: String) = new PipeHead(new ByteArrayInputStream(str.getBytes()), "echo")
   def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe =
     new AbsPipe:
       val __ = new Ext[AbsPipe]:
