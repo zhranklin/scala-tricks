@@ -1,6 +1,6 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.6-SNAPSHOT",
+  version := "0.2.6",
   scalaVersion := "3.7.3",
   // Sonatype OSS deployment
   publishMavenStyle := true,
@@ -31,5 +31,6 @@ lazy val core = project.settings(
   libraryDependencies ++=
     "com.lihaoyi" %% "os-lib"       % "0.11.6" ::
     "me.vican.jorge" % "dijon_2.13" % "0.6.0" ::
+    "io.circe"      %% "circe-core" % "0.14.15" ::
     Nil
 )
