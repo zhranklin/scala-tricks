@@ -1,22 +1,21 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.5",
-  scalaVersion := "3.3.0",
+  version := "0.2.6-SNAPSHOT",
+  scalaVersion := "3.7.3",
   // Sonatype OSS deployment
   publishMavenStyle := true,
   publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+    if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+    else localStaging.value
   },
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
   licenses := ("Apache2", url("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil,
   homepage := Some(url("http://zhranklin.com")),
   scmInfo := Some(ScmInfo(url("https://github.com/zhranklin/scala-tricks"), "scm:git:git@github.com/zhranklin/scala-tricks.git", None)),
-  developers := Developer("Zhranklin", "Zhranklin", "chigou79@outlook.com", url("http://www.zhranklin.com")) :: Nil
+  developers := Developer("Zhranklin", "Zhranklin", "chigou79@outlook.com", url("http://www.zhranklin.com")) :: Nil,
+  credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 )
 
 lazy val rootProject = (project in file("."))
@@ -30,7 +29,7 @@ lazy val core = project.settings(
   commonSettings,
   name := "scala-tricks",
   libraryDependencies ++=
-    "com.lihaoyi" %% "os-lib"       % "0.9.1" ::
-    "me.vican.jorge" % "dijon_2.13" % "0.6.0" % "provided" ::
+    "com.lihaoyi" %% "os-lib"       % "0.11.6" ::
+    "me.vican.jorge" % "dijon_2.13" % "0.6.0" ::
     Nil
 )
