@@ -5,7 +5,7 @@ package zrkn.op
  */
 
 object RegexOpsContext:
-  def groups(str: String) = "\\(".r.findAllIn(str).size - """\(\?([idmsuxU=>!:]|<[!=])""".r.findAllIn(str).size
+  def groups(str: String) = """\(""".r.findAllIn(str).size - """\(\?([idmsuxU=>!:]|<[!=])""".r.findAllIn(str).size - """\\\(""".r.findAllIn(str).size
 
   class Interped(sc: StringContext):
     def unapplySeq(s: String): Option[Seq[String]] =
@@ -30,3 +30,5 @@ object RegexOpsContext:
       "asdf,kkk,.,.,...,a111" match
         case k @ rr"$a,$b(\w+),$c([^a-zA-Z0-9]+)$d(\w\d+)" => println(s"K=$k/A=$a/B=$b/C=$c/D=$d")
     }
+    "x(123)y" match
+      case rr"$a\($b\)$c" => println(s"A=$a/B=$b/C=$c")
