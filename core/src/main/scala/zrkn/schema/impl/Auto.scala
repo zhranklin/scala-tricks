@@ -8,7 +8,7 @@ import scala.annotation.nowarn
 import scala.compiletime.{constValue, erasedValue, error, summonInline}
 import scala.deriving.Mirror
 
-trait auto {
+trait Auto {
   given intJsonSchemaInstance[T <: Int]: JsonSchemaEncoder[T] with {
     def schema: Json = Json.obj("type" -> Json.fromString("integer"))
   }
@@ -160,5 +160,3 @@ trait auto {
   inline given derivedSum[T: Mirror.SumOf]: JsonSchemaEncoder[T] =
     derived[T]
 }
-
-object auto extends auto

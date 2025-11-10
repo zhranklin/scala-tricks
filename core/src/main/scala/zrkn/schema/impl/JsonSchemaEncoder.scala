@@ -6,7 +6,7 @@ trait JsonSchemaEncoder[T] {
   def schema: Json
 }
 
-object JsonSchemaEncoder {
+object JsonSchemaEncoder extends Auto {
   inline def ev[T](using ev: JsonSchemaEncoder[T]): JsonSchemaEncoder[T] = ev
 
   inline def apply[T: JsonSchemaEncoder]: JsonSchemaEncoder[T] = ev

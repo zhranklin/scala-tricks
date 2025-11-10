@@ -1,16 +1,18 @@
 package zrkn
 
 package object schema {
-  export zrkn.schema.impl.auto.given
   export zrkn.schema.impl.{JsonSchema, JsonSchemaField, desc}
 }
 
-package schema {
+package other {
   private object JsonSchemaTest {
+    import zrkn.schema._
+    case class TestSchema(@desc("name111") name: String)
+    case class Ts(ts: List[TestSchema])
+
     def main(args: Array[String]): Unit = {
-      import zrkn.schema.{_, given}
-      case class TestSchema(@desc("name111") name: String)
       println(JsonSchema[TestSchema])
+      println(JsonSchema[Ts])
     }
   }
 }
