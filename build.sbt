@@ -1,6 +1,6 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.7",
+  version := "0.2.8",
   scalaVersion := "3.7.3",
   // Sonatype OSS deployment
   publishMavenStyle := true,
@@ -9,7 +9,7 @@ lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
     if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
     else localStaging.value
   },
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ => false },
   licenses := ("Apache2", url("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil,
   homepage := Some(url("http://zhranklin.com")),
@@ -29,8 +29,8 @@ lazy val core = project.settings(
   commonSettings,
   name := "scala-tricks",
   libraryDependencies ++=
-    "com.lihaoyi" %% "os-lib"       % "0.11.6" ::
-    "me.vican.jorge" % "dijon_2.13" % "0.6.0" ::
-    "io.circe"      %% "circe-core" % "0.14.15" ::
+    "com.lihaoyi"    %% "os-lib"     % "0.11.6"  ::
+    "me.vican.jorge" %  "dijon_2.13" % "0.6.0"   ::
+    "io.circe"       %% "circe-core" % "0.14.15" ::
     Nil
 )

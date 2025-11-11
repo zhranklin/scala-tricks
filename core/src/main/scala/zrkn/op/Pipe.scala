@@ -1,8 +1,6 @@
 package zrkn.op
 
-import os.ProcessInput.SourceInput
 import os.{CommandResult, Path, ProcessOutput, SubProcess, proc}
-import zrkn.op.Pipe.SubProc
 
 import java.io.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -12,47 +10,63 @@ import scala.language.{dynamics, implicitConversions}
 /**
  * Created by 张武(zhangwu@corp.netease.com) at 2020/9/6
  **/
-class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, private var useStderr: Boolean = false) extends AbsPipe with Dynamic:
+class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity) extends AbsPipe with Dynamic:
   import Pipe.SubProc
-  def |[T](next: Pipe.PipeTail[T])(using Path) = next.execute(this)
+  var __mergeErrorIntoOut = false
+  def |[T](next: Pipe.PipeTail[T]) = next.execute(this)
   def selectDynamic(cmd: String): Pipe = __(cmd)
-  def !(using Path): CommandResult = this | Pipe.!#
-  def !!(using Path): String = this | Pipe.!!
-  def !!!(using Path): CommandResult = this | Pipe.!!!
+  def >(out: os.ProcessOutput = null, err: os.ProcessOutput = null, merge: java.lang.Boolean = null): this.type =
+
+    if out != null then __stdout = out
+    if err != null then __stderr = err
+    if merge != null then __mergeErrorIntoOut = merge
+    this
+  // 执行命令, 所有输出都会直接打出来
+  def ! : CommandResult =
+    if __stdout == os.Pipe then
+      __stdout = os.Inherit
+    __.call()
+  // 执行命令, 标准输出会捕获到结果中, 如果执行错误会抛出异常
+  def !! : String =
+    if __stdout == os.Inherit then
+      __stdout = os.Pipe
+    __.call(check = true).out.text()
+  // 执行命令, 所有输出会捕获到结果中
+  def !!! : CommandResult =
+    if __stdout == os.Inherit then
+      __stdout = os.Pipe
+    if __stderr == os.Inherit then
+      __stderr = os.Pipe
+    __.call()
   val __ : Pipe.Ext[Pipe] = new Pipe.Ext[Pipe]:
-    def getOutput: (ProcessOutput, ProcessOutput) =
-      if useStderr then
-        (os.Pipe, __processOutput)
-      else
-        (__processOutput, os.Pipe)
     val proc: proc = os.proc(__f(__cmd))
-    override def apply(cmd: String) = new Pipe(__cmd :+ cmd, __f, useStderr)
-    def spawn(using wd: Path): SubProc =
+    override def apply(cmd: String) = new Pipe(__cmd :+ cmd, __f)
+    def spawn: SubProc =
       val prev = __invokePrev
-      val (stdout, stderr) = getOutput
       val sub = proc.spawn(
         stdin = prev.stdout,
-        stdout = stdout,
-        stderr = stderr,
-        cwd = wd
+        stdout = Pipe.this.__stdout,
+        stderr = Pipe.this.__stderr,
+        mergeErrIntoOut = __mergeErrorIntoOut,
+        cwd = __op_wd
       )
-      SubProc(if (useStderr) sub.stderr else sub.stdout, Pipe.makeCancelCallback(prev, sub))
-    override def call(check: Boolean = false)(using wd: Path): CommandResult =
+      SubProc(if (__stderr == os.Pipe && __stdout != os.Pipe) sub.stderr else sub.stdout, Pipe.makeCancelCallback(prev, sub))
+    override def call(check: Boolean = false): CommandResult =
       val prev = __invokePrev
-      val (stdout, stderr) = getOutput
       proc.call(
         stdin = prev.stdout,
-        stdout = stdout,
-        stderr = stderr,
+        stdout = Pipe.this.__stdout,
+        stderr = Pipe.this.__stderr,
         check = check,
-        cwd = wd
+        mergeErrIntoOut = __mergeErrorIntoOut,
+        cwd = __op_wd
       )
 end Pipe
 
 object Pipe:
   trait Ext[+T <: AbsPipe]:
-    def spawn(using Path): SubProc
-    def call(check: Boolean = false)(using Path) =
+    def spawn: SubProc
+    def call(check: Boolean = false) =
       val pproc = spawn
       proc("cat").call(
         stdin = pproc.stdout,
@@ -89,9 +103,9 @@ object Pipe:
 
   class PipeHead(inputStream: java.io.InputStream, name: String) extends Pipe(Nil):
     override val __ = new Ext[PipeHead]:
-      def spawn(using Path): SubProc =
+      def spawn: SubProc =
         SubProc(new SubProcess.OutputStream(inputStream), () => ())
-      override def call(check: Boolean = false)(using Path): CommandResult =
+      override def call(check: Boolean = false): CommandResult =
         val chunks = new ListBuffer[Either[geny.Bytes, geny.Bytes]]()
         os.Internals.transfer0(inputStream, (buf, n) => {chunks.addOne(Left(new geny.Bytes(java.util.Arrays.copyOf(buf, n)))); ()})
         CommandResult("PipeHead" :: name :: Nil, 0, chunks.toSeq)
@@ -99,11 +113,11 @@ object Pipe:
   def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe =
     new AbsPipe:
       val __ = new Ext[AbsPipe]:
-        def spawn(using Path): SubProc =
+        def spawn: SubProc =
           val cancelCB: ArrayBlockingQueue[() => Unit] = new ArrayBlockingQueue[() => Unit](1)
           val prevProc = __invokePrev
           val po = new PipedOutputStream()
-          val writer = if (__processOutput == os.Inherit) new OutputStreamWriter(System.out) else OutputStreamWriter(po)
+          val writer = if (__stdout == os.Inherit) new OutputStreamWriter(System.out) else OutputStreamWriter(po)
           val pi = new PipedInputStream(po)
           val pproc = proc("cat").spawn(
             stdin = prevProc.stdout,
@@ -132,17 +146,18 @@ object Pipe:
       prev.cancelF()
 
   trait PipeTail[+T]:
-    def execute(pipe: Pipe)(using Path): T
+    def execute(pipe: Pipe): T
   object bash extends Pipe(Vector.empty, s => Vector("bash", "-c", s.mkString(" "))):
     def apply(cmd: String): Pipe = __(cmd)
-  val ! = new Pipe(Vector.empty)
-  // 直接调用, 并将结果直接输出到控制台
+  val ! = new Pipe(Vector.empty) with PipeTail[CommandResult]:
+    def execute(pipe: Pipe) = pipe.!
+  // 直接调用, 并将结果直接输出到控制台, xxx | !#, 或者 xxx.!
   val !# = new PipeTail[CommandResult]:
-    def execute(pipe: Pipe)(using Path) = pipe.__setOutput(os.Inherit).__.call()
+    def execute(pipe: Pipe) = pipe.!
   // 调用后将结果返回到字符串, 如执行失败会抛出异常
   val !! = new PipeTail[String]:
-    def execute(pipe: Pipe)(using Path) = pipe.__.call(check = true).out.text()
+    def execute(pipe: Pipe) = pipe.!!
   // 调用后将结果封装到CallResult对象
   val !!! = new PipeTail[CommandResult]:
-    def execute(pipe: Pipe)(using Path) = pipe.__.call()
+    def execute(pipe: Pipe) = pipe.!!!
 end Pipe

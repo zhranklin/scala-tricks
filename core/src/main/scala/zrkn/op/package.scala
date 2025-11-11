@@ -12,8 +12,8 @@ package object op:
   def echo(str: String) = Pipe.echo(str)
   def readLine(f: (BufferedReader, Writer) => Unit): AbsPipe = Pipe.readLine(f)
   val bash = Pipe.bash
+  // 直接调用, 并将结果直接输出到控制台, !和!#一样, 只是scala 2.x好像用不了!, 此时用!#替代
   val ! = Pipe.!
-  // 直接调用, 并将结果直接输出到控制台
   val !# = Pipe.!#
   // 调用后将结果返回到字符串, 如执行失败会抛出异常
   val !! = Pipe.!!
@@ -26,6 +26,7 @@ package object op:
     def |[T](next: Pipe.PipeTail[T])(using Path) = echo(s) | next
     def |[T <: AbsPipe](next: T): T = echo(s) | next
 
-  private var wd0: Path = os.pwd
-  inline given wd: Path = wd0
-  def cd[T: PathConvertible](f: T): Unit = wd0 = Path.expandUser(f, wd0)
+  private var __op_wd: Path = os.pwd
+  def cd[T: PathConvertible](f: T) =
+    __op_wd = Path.expandUser(f, __op_wd)
+    __op_wd
