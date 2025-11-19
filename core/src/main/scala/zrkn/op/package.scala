@@ -23,7 +23,8 @@ package object op:
   extension (sc: StringContext) def rr: Interped = new Interped(sc)
 
   extension (s: String)
-    def |[T](next: Pipe.PipeTail[T])(using Path) = echo(s) | next
+    def |[T](next: Pipe.PipeTail[T] with AbsPipe) = echo(s) | next.asInstanceOf[Pipe.PipeTail[T]]
+    def |[T](next: Pipe.PipeTail[T]) = echo(s) | next
     def |[T <: AbsPipe](next: T): T = echo(s) | next
 
   private var __op_wd: Path = os.pwd
