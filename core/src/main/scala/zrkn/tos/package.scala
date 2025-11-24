@@ -8,19 +8,19 @@ import com.volcengine.tos.model.`object`.{ObjectMetaRequestOptions, PutObjectInp
 import java.io.ByteArrayInputStream
 import java.util.UUID
 
-package object tos {
-  var TOS_AK = ""
-  var TOS_SK = ""
-  var TOS_REGION = "cn-beijing"
-  var TOS_ENDPOINT = "tos-cn-beijing.volces.com"
-  var TOS_BUCKET = ""
+package object tos:
+  var AK = ""
+  var SK = ""
+  var REGION = "cn-beijing"
+  var ENDPOINT = "tos-cn-beijing.volces.com"
+  var BUCKET = ""
 
 
   lazy private val tos = new TOSV2ClientBuilder().build:
     TOSClientConfiguration.builder()
-      .region(TOS_REGION)
-      .endpoint(TOS_ENDPOINT)
-      .credentials(new StaticCredentials(TOS_AK, TOS_SK))
+      .region(REGION)
+      .endpoint(ENDPOINT)
+      .credentials(new StaticCredentials(AK, SK))
       .build()
 
   // 如果要上传本地文件，推荐使用 uploadTOS(os.read.bytes(file))
@@ -28,7 +28,7 @@ package object tos {
   def uploadTOS(image: Array[Byte], postfix: String = ""): String =
     val fn = UUID.randomUUID.toString + postfix
     val put = new PutObjectInput()
-      .setBucket(TOS_BUCKET)
+      .setBucket(BUCKET)
       .setKey(s"tmp/$fn")
       .setOptions {
         val o = new ObjectMetaRequestOptions
@@ -36,6 +36,4 @@ package object tos {
       }
       .setContent(new ByteArrayInputStream(image))
     val resp = tos.putObject(put)
-    s"https://$TOS_BUCKET.$TOS_ENDPOINT/tickets/$fn"
-
-}
+    s"https://$BUCKET.$ENDPOINT/tickets/$fn"

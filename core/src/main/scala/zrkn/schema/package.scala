@@ -1,10 +1,9 @@
 package zrkn
 
-package object schema {
+package object schema:
   export zrkn.schema.impl.{JsonSchema, JsonSchemaField, desc}
-}
 
-package other {
+package other:
   private object JsonSchemaTest {
     import zrkn.schema._
     case class TestSchema(@desc("name111") name: String)
@@ -15,4 +14,3 @@ package other {
       println(JsonSchema[Ts])
     }
   }
-}

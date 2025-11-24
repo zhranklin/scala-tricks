@@ -2,7 +2,7 @@ package zrkn
 
 import dijon.*
 
-package object llm {
+package object llm:
 
   var ARK_TOKEN = ""
   var ARK_MODEL = "doubao-seed-1-6-251015"
@@ -79,4 +79,3 @@ package object llm {
       )
     ).text()
     parse(respText).choices(0).message.content.asString.get
-}
