@@ -10,7 +10,7 @@ import scala.language.{dynamics, implicitConversions}
 /**
  * Created by 张武(zhangwu@corp.netease.com) at 2020/9/6
  **/
-class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity) extends AbsPipe with Dynamic:
+class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, var __env_map: Map[String, String] = Map.empty) extends AbsPipe with Dynamic:
   import Pipe.SubProc
   var __mergeErrorIntoOut = false
   def |[T](next: Pipe.PipeTail[T]) = next.execute(this)
@@ -38,9 +38,12 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity) exten
     if __stderr == os.Inherit then
       __stderr = os.Pipe
     __.call()
+  def __env(env: (String, String)*) =
+    __env_map = __env_map.concat(env.toMap)
+    this
   val __ : Pipe.Ext[Pipe] = new Pipe.Ext[Pipe]:
     val proc: proc = os.proc(__f(__cmd))
-    override def apply(cmd: String) = new Pipe(__cmd :+ cmd, __f)
+    override def apply(cmd: String) = new Pipe(__cmd :+ cmd, __f, __env_map)
     def spawn: SubProc =
       val prev = __invokePrev
       val sub = proc.spawn(
@@ -48,6 +51,7 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity) exten
         stdout = Pipe.this.__stdout,
         stderr = Pipe.this.__stderr,
         mergeErrIntoOut = __mergeErrorIntoOut,
+        env = __env_map,
         cwd = __op_wd
       )
       SubProc(if (__stderr == os.Pipe && __stdout != os.Pipe) sub.stderr else sub.stdout, Pipe.makeCancelCallback(prev, sub))
@@ -59,6 +63,7 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity) exten
         stderr = Pipe.this.__stderr,
         check = check,
         mergeErrIntoOut = __mergeErrorIntoOut,
+        env = __env_map,
         cwd = __op_wd
       )
 end Pipe
