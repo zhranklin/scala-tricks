@@ -59,11 +59,14 @@ package object llm:
   def askDeepseek(prompt: String,
                   json: Boolean = false,
                   maxCompletion: Int = 65535,
+                  thinking: Boolean = false,
+                  temperature: Double = 1.3,
                  ): String =
     val respText = requests.post(s"https://api.deepseek.com/chat/completions",
       data = s"""{
-        "model": "deepseek-chat",
+        "model": "${if thinking then "deepseek-reasoner" else "deepseek-chat"}",
         "max_completion_tokens": $maxCompletion,
+        "temperature": $temperature,
         "messages": [
           {
             "content": ${io.circe.Json.fromString(prompt)},
