@@ -1,44 +1,44 @@
 package zrkn.schema.impl
 
-import io.circe.Json
 import zrkn.schema.impl.JsonSchemaField
 import zrkn.schema.impl.JsonSchemaEncoder
 
 import scala.annotation.nowarn
 import scala.compiletime.{constValue, erasedValue, error, summonInline}
 import scala.deriving.Mirror
+import dijon._
 
 trait Auto {
+  import dijon.obj
   given intJsonSchemaInstance[T <: Int]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("integer"))
+    def schema: SomeJson = obj("type" -> "integer")
   }
 
   given stringJsonSchemaInstance[T <: String]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("string"))
+    def schema: SomeJson = obj("type" -> "string")
   }
 
   given longJsonSchemaInstance[T <: Long]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("integer"))
+    def schema: SomeJson = obj("type" -> "integer")
   }
 
   given doubleJsonSchemaInstance[T <: Double]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("number"))
+    def schema: SomeJson = obj("type" -> "number")
   }
 
   given floatJsonSchemaEncoder[T <: Float]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("number"))
+    def schema: SomeJson = obj("type" -> "number")
   }
 
   given booleanJsonSchemaEncoder[T <: Boolean]: JsonSchemaEncoder[T] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("boolean"))
+    def schema: SomeJson = obj("type" -> "boolean")
   }
 
   given listJsonSchemaEncoder[T: JsonSchemaEncoder]: JsonSchemaEncoder[List[T]]
     with {
-    def schema: Json =
-      Json
-        .obj(
-          "type"  -> Json.fromString("array"),
+    def schema: SomeJson =
+        obj(
+          "type"  -> "array",
           "items" -> JsonSchemaEncoder[T].schema
         )
   }
@@ -46,16 +46,15 @@ trait Auto {
   given arrayJsonSchemaEncoder[T: JsonSchemaEncoder]
   : JsonSchemaEncoder[Array[T]]
     with {
-    def schema: Json =
-      Json
-        .obj(
-          "type"  -> Json.fromString("array"),
+    def schema: SomeJson =
+        obj(
+          "type"  -> "array",
           "items" -> JsonSchemaEncoder[T].schema
         )
   }
 
   given nullJsonSchemaEncoder: JsonSchemaEncoder[Null] with {
-    def schema: Json = Json.obj("type" -> Json.fromString("null"))
+    def schema: SomeJson = obj("type" -> "null")
   }
 
   inline private def summonLabels[Elems <: Tuple]: List[String] =
@@ -92,43 +91,49 @@ trait Auto {
   private def sumEncoder[T: Mirror.SumOf](
     elems: => List[JsonSchemaEncoder[?]],
     elemLabels: => List[String],
-    childAnnotations: => Map[String, List[(String, Json)]],
-    typeAnnotations: => List[(String, Json)]
+    childAnnotations: => Map[String, List[(String, SomeJson)]],
+    typeAnnotations: => List[(String, SomeJson)]
   ): JsonSchemaEncoder[T] = new JsonSchemaEncoder[T] {
-    override def schema: Json = Json
-      .obj(
-        "anyOf" -> Json.arr(
-          elems.zip(elemLabels).map { (elem, label) =>
-            val annotations = childAnnotations.getOrElse(label, Nil)
-            elem.schema.deepMerge(Json.obj(annotations*))
-          }*
-        )
+    override def schema: SomeJson =
+      deepMerge(
+        obj(
+          "anyOf" -> arr(
+            elems.zip(elemLabels).map { (elem, label) =>
+              val annotations = childAnnotations.getOrElse(label, Nil)
+              deepMerge(elem.schema, obj(annotations*))
+            }*
+          )
+        ),
+        obj(typeAnnotations*)
       )
-      .deepMerge(Json.obj(typeAnnotations*))
   }
 
+  def deepMerge(obj1: SomeJson, obj2: SomeJson): SomeJson = obj1.deepCopy ++ obj2.deepCopy
   private def productEncoder[T: Mirror.ProductOf](
     elems: => List[JsonSchemaEncoder[?]],
     elemLabels: => List[String],
-    constructorAnnotations: => Map[String, List[(String, Json)]],
-    typeAnnotations: => List[(String, Json)]
+    constructorAnnotations: => Map[String, List[(String, SomeJson)]],
+    typeAnnotations: => List[(String, SomeJson)]
   ): JsonSchemaEncoder[T] =
     new JsonSchemaEncoder[T] {
-      override def schema = Json
-        .obj(
-          "type" -> Json.fromString("object"),
-          "properties" -> Json.obj(
+      override def schema: SomeJson =
+        deepMerge(
+
+        obj(
+          "type" -> "object",
+          "properties" -> obj(
             elems
               .zip(elemLabels)
               .map { (elem, label) =>
                 val annotations = constructorAnnotations.getOrElse(label, Nil)
-                label -> elem.schema.deepMerge(Json.obj(annotations*))
+                label -> deepMerge(elem.schema, obj(annotations*))
               }*
           ),
-          "required" -> Json.arr(elemLabels.map(Json.fromString)*),
-          "additionalProperties" -> Json.fromBoolean(false),
+          "required" -> arr(elemLabels.map(dijon.Json(_))*),
+          "additionalProperties" -> false,
+        ),
+        obj(typeAnnotations*)
         )
-        .deepMerge(Json.obj(typeAnnotations*))
     }
 
   inline def derived[T](using m: Mirror.Of[T]): JsonSchemaEncoder[T] = {

@@ -1,6 +1,6 @@
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq(
   organization := "com.zhranklin",
-  version := "0.2.10",
+  version := "0.2.11",
   scalaVersion := "3.7.3",
   // Sonatype OSS deployment
   publishMavenStyle := true,
@@ -31,11 +31,9 @@ lazy val core = project.settings(
   libraryDependencies ++=
     "com.lihaoyi"    %% "os-lib"     % "0.11.6"  ::
     "me.vican.jorge" %  "dijon_2.13" % "0.6.0"   ::
-    "io.circe"       %% "circe-core" % "0.14.15" ::
     "com.lihaoyi"    %% "requests"   % "0.9.0"   ::
     "io.reactivex.rxjava3" % "rxjava" % "3.1.12" % "provided" ::
-    "com.volcengine" % "ve-tos-java-sdk" % "2.9.5" % "provided" ::
-    "io.circe" %% "circe-generic" % "0.14.15" % "provided" ::
-    "io.circe" %% "circe-parser" % "0.14.15" % "provided" ::
+    "com.volcengine" % "ve-tos-java-sdk" % "2.9.8" % "provided" ::
+    "com.aliyun" % "alibabacloud-oss-v2" % "0.3.0" % "provided" ::
     Nil
 )

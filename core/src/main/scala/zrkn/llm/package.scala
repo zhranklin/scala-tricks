@@ -6,9 +6,60 @@ package object llm:
 
   var ARK_TOKEN = ""
   var ARK_MODEL = "doubao-seed-1-6-251015"
-  var REGION = "cn-beijing"
+  var ARK_REGION = "cn-beijing"
+
+  var ALI_TOKEN = ""
+  var ALI_MODEL = "qwen3-vl-flash"
 
   var DEEPSEEK_TOKEN = ""
+
+  def llmImageAli(prompt: String,
+               imageUrl: String,
+               jsonSchema: String = null,
+               maxCompletion: Int = 65535
+              ): String =
+    val response_format =
+      if jsonSchema != null && jsonSchema.nonEmpty then
+        s""" "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "ticket_info",
+            "schema": $jsonSchema,
+            "strict": true
+          }
+        },"""
+      else ""
+    val data = s"""{
+        "model": "$ALI_MODEL",
+        "max_completion_tokens": $maxCompletion,
+        "enable_thinking": false,
+        $response_format
+        "messages": [
+          {
+            "content": [
+              {
+                "image_url": {
+                  "url": "$imageUrl"
+                },
+                "type": "image_url"
+              },
+              {
+                  "text": ${dijon.Json(prompt)},
+                  "type": "text"
+              }
+            ],
+            "role": "user"
+          }
+        ]
+      }"""
+    println(s"Request body is $data")
+    val respText = requests.post(s"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", data = data,
+    headers = Map(
+        "Content-Type" -> "application/json",
+        "Authorization" -> s"Bearer $ALI_TOKEN"
+      )
+    ).text()
+    parse(respText).choices(0).message.content.asString.get
 
   def llmImage(prompt: String,
                imageUrl: String,
@@ -26,7 +77,7 @@ package object llm:
           }
         },"""
       else ""
-    val respText = requests.post(s"https://ark.$REGION.volces.com/api/v3/chat/completions",
+    val respText = requests.post(s"https://ark.$ARK_REGION.volces.com/api/v3/chat/completions",
       data = s"""{
         "model": "$ARK_MODEL",
         "max_completion_tokens": $maxCompletion,
@@ -42,7 +93,7 @@ package object llm:
                 "type": "image_url"
               },
               {
-                  "text": ${io.circe.Json.fromString(prompt)},
+                  "text": ${dijon.Json(prompt)},
                   "type": "text"
               }
             ],
@@ -69,7 +120,7 @@ package object llm:
         "temperature": $temperature,
         "messages": [
           {
-            "content": ${io.circe.Json.fromString(prompt)},
+            "content": ${dijon.Json(prompt)},
             "role": "user"
           }
         ],

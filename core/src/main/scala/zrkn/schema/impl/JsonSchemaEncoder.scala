@@ -1,9 +1,9 @@
 package zrkn.schema.impl
 
-import io.circe.Json
+import dijon.SomeJson
 
 trait JsonSchemaEncoder[T] {
-  def schema: Json
+  def schema: SomeJson
 }
 
 object JsonSchemaEncoder extends Auto {
