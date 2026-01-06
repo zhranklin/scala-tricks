@@ -109,6 +109,7 @@ package object llm:
     parse(respText).choices(0).message.content.asString.get
   def askDeepseek(prompt: String,
                   json: Boolean = false,
+                  systemPrompt: String = "",
                   maxCompletion: Int = 65535,
                   thinking: Boolean = false,
                   temperature: Double = 1.3,
@@ -119,6 +120,10 @@ package object llm:
         "max_completion_tokens": $maxCompletion,
         "temperature": $temperature,
         "messages": [
+          ${if systemPrompt.isEmpty then "" else s"""{
+            "content": ${dijon.Json(systemPrompt)},
+            "role": "system"
+          },"""}
           {
             "content": ${dijon.Json(prompt)},
             "role": "user"
