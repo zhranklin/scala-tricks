@@ -52,7 +52,6 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, var _
         stderr = Pipe.this.__stderr,
         mergeErrIntoOut = __mergeErrorIntoOut,
         env = __env_map,
-        cwd = __op_wd
       )
       SubProc(if (__stderr == os.Pipe && __stdout != os.Pipe) sub.stderr else sub.stdout, Pipe.makeCancelCallback(prev, sub))
     override def call(check: Boolean = false): CommandResult =
@@ -64,7 +63,6 @@ class Pipe(__cmd: Seq[String], __f: Seq[String] => Seq[String] = identity, var _
         check = check,
         mergeErrIntoOut = __mergeErrorIntoOut,
         env = __env_map,
-        cwd = __op_wd
       )
 end Pipe
 

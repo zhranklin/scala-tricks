@@ -26,8 +26,3 @@ package object op:
     def |[T](next: Pipe.PipeTail[T] with AbsPipe) = echo(s) | next.asInstanceOf[Pipe.PipeTail[T]]
     def |[T](next: Pipe.PipeTail[T]) = echo(s) | next
     def |[T <: AbsPipe](next: T): T = echo(s) | next
-
-  private var __op_wd: Path = os.pwd
-  def cd[T: PathConvertible](f: T) =
-    __op_wd = Path.expandUser(f, __op_wd)
-    __op_wd
